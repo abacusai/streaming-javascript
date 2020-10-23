@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html class="no-js" lang="">
+
+<head>
+    <title>Streaming API RE.AI - Sample</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <!-- Abacus.AI SDK -->
+    <script async src="https://static.abacus.ai/sdk/js/streaming.v4.min.js"></script>
+    <script>
+    window.reDataList = window.reDataList || [];
+
+    function reaitag() { window.reDataList.push(Array.prototype.slice.call(arguments)); }
+    reaitag('init', {
+        // Fill in with your streamingToken and streaming datasetIds
+        streamingToken: '2d8bbb5975c744e287603175dc82e4bd',
+        datasets: {
+            interaction: '70d55f000',
+            item: '785c1408a',
+            user: '7fe2c9114'
+        },
+        // The following inputs are only required to perform predictions
+        // deploymentId: 'deploymentId',
+        // deploymentToken: 'deploymentToken',
+    });
+    </script>
+    <!-- User script -->
+    <script>
+    function updateUser() {
+        alert('Updating User');
+        reaitag('upsertUserAttributes', {
+            userId: 'user1',
+            userAttributes: {
+                'zipcode': '78703'
+            }
+        });
+    }
+
+    function updateItem() {
+        alert('Updating item');
+        reaitag('upsertItemAttributes', {
+            itemId: 'item1',
+            additionalAttributes: {
+                'color': 'blue'
+            }
+        });
+    }
+
+    function addInteraction() {
+        alert('Adding Interaction');
+        reaitag('addUserItemInteraction', {
+            userId: 'user1',
+            itemId: ['item1'],
+            eventType: 'click',
+            additionalAttributes: {
+                'foo': 'bar'
+            }
+        });
+    }
+
+    function getRecommendations() {
+        alert('Getting Recommendations');
+        reaitag('getRecommendations', {options: {page: 1, numItems: 3}}, (result, error) => {
+            if (result) {
+                console.log(result);
+            } else {
+                console.log('Prediction Error');
+                console.log(error);
+            }
+        });
+    }
+    </script>
+</head>
+
+<body style="margin: 0; padding: 0; height: 100%; overflow: hidden; color: white; background-color: black;" id="home" class="homeindex">
+    <ul style="list-style: none;">
+        <li><button onclick="updateUser()">Update User</button></li>
+        <li><button onclick="updateItem()">Update Item</button></li>
+        <li><button onclick="addInteraction()">Add User Item Interaction</button></li>
+        <li><button onclick="getRecommendations()">Get Recommendations</button></li>
+    </ul>
+</body>
+
+</html>
