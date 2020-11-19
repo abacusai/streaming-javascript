@@ -31,7 +31,7 @@
     var interactionBuffer = [];
     var currentTimestamp = -1;
 
-    function initREaiCookieUser() {
+    function initREaiCookieUser(newUserAttributes) {
         let userCookie = document.cookie.split(';').find(function(entry) {
             return entry.trim().startsWith('abacusAiUserId=');
         });
@@ -54,7 +54,8 @@
                             '_timezone': (new Date()).getTimezoneOffset(),
                             '_referrer': document.referrer,
                             '_useragent': navigator.userAgent,
-                            '_screendim': window.screen.width + "x" + window.screen.height
+                            '_screendim': window.screen.width + "x" + window.screen.height,
+                            ...newUserAttributes
                         }
 
                     }
@@ -82,20 +83,20 @@
                 console.warn('Missing required init params.')
                 return
             }
-            let subdomain = (params.workspace || '').replace(/[^a-zA-Z0-9]/g, '') || 'www';
+            let subdomain = (params.workspace || '').replace(/[^a-zA-Z0-9.]/g, '') || 'www';
             ENDPOINT = `https://${subdomain}.abacus.ai/api`
             AUTH_PARAM = 'streamingToken=' + params.streamingToken;
             DATASETS = params.datasets || {}
             DEPLOYMENT_ID = params.deploymentId || null;
             DEPLOYMENT_PARAM = 'deploymentToken=' + params.deploymentToken;
-            PREDICTION_USER_KEY = params.userKey;
+            PREDICTION_USER_KEY = params.userKey || PREDICTION_USER_KEY;
             if (params.hasOwnProperty(USER_KEY) && params[USER_KEY]) {
                 userId = params[USER_KEY];
             } else {
                 if (params.hasOwnProperty(USER_KEY)) {
                     console.error('Invalid value for userId field, using cookie instead.')
                 }
-                initREaiCookieUser()
+                initREaiCookieUser(params.newUserAttributes)
             }
             callback(userId);
             return userId;
