@@ -16,4 +16,4 @@ reaitag('init', {streamingToken: '***',
     });
 ```
 
-You can checkout the example on (JSFiddle)[https://jsfiddle.net/gh/get/library/pure/abacusai/streaming-javascript/tree/main/example]
+You can checkout the example on [JSFiddle](https://jsfiddle.net/gh/get/library/pure/abacusai/streaming-javascript/tree/main/example)
