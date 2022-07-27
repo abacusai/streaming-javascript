@@ -9,7 +9,7 @@
         appendMultiple: 'appendMultipleData'
     }
 
-    var PREDICT_METHOD = 'predict'
+    var PREDICT_METHOD = 'predict';
 
     var ENDPOINT;
     var AUTH_PARAM;
@@ -24,7 +24,7 @@
 
     var PREDICTION_USER_KEY = 'userId';
     var USER_KEY = 'userId';
-    var TIMESTAMP_KEY = 'timestamp'
+    var TIMESTAMP_KEY = 'timestamp';
 
     function initAbacusaiCookieUser(newUserAttributes) {
         let userCookie = document.cookie.split(';').find(function(entry) {
@@ -62,11 +62,11 @@
     }
 
     function methodUrl(method, featureGroupId) {
-        return `${ENDPOINT}/api/v0/${method}?${AUTH_PARAM}&featureGroupId=${featureGroupId}`;
+        return `${ENDPOINT}/${method}?${AUTH_PARAM}&featureGroupId=${featureGroupId}`;
     }
 
     function predictionUrl() {
-        return `${ENDPOINT}/api/v0/predict?${DEPLOYMENT_AUTH_PARAM}&deploymentId=${DEPLOYMENT_ID}`;
+        return `${ENDPOINT}/predict?${DEPLOYMENT_AUTH_PARAM}&deploymentId=${DEPLOYMENT_ID}`;
     }
 
     function reaitag(command, params, callback = () => {}) {
@@ -82,6 +82,7 @@
             DEPLOYMENT_ID = params.deploymentId || null;
             DEPLOYMENT_AUTH_PARAM = 'deploymentToken=' + params.deploymentToken;
             PREDICTION_USER_KEY = params.userKey || PREDICTION_USER_KEY;
+            USER_KEY = params.userKey || USER_KEY;
             if (params.hasOwnProperty(USER_KEY) && params[USER_KEY]) {
                 userId = params[USER_KEY];
             } else {
@@ -96,7 +97,7 @@
 
         if (command === 'setUser') {
             if (params) {
-                userId = params
+                userId = params;
             }
             return;
         }
@@ -188,7 +189,7 @@
         };
 
         request.setRequestHeader("Content-Type", "application/json");
-        request.send(JSON.stringify(params.event.data));
+        request.send(JSON.stringify({'data': params.event.data}));
     }
 
     function postPrediction(params, callback) {

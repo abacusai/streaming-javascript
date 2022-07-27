@@ -18,8 +18,8 @@
             record: '87bcbca40', // records interactions
             user: '11e42e1508', // stores user information
         },
-        userId: 'your Unique USER ID', // comment this line out to let abacus.ai autogenerate a unique visitorId
         userKey: 'visitorId', // Abacus.AI will stream the userId to this key
+        visitorId: 'your Unique USER ID', // comment this line out to let abacus.ai autogenerate a unique visitorId
         // deploymentId: 'deploymentId',
         // deploymentToken: 'deploymentToken',
     }, (user_id) => {console.log(`Initialized with userId ${user_id}`);}
@@ -30,7 +30,7 @@
     function updateUser() {
         alert('Updating User');
         reaitag('user', {
-            userId: 'user1',
+            userName: 'user1',
             zipcode: '78703'
         });
     }
