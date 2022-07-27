@@ -43,8 +43,8 @@
         });
     }
 
-    function getRecommendations() {
-        alert('Getting Recommendations');
+    function getPrediction() {
+        alert('Getting Prediction');
         reaitag('predict', {options: {page: 1, numItems: 3}}, (result, error) => {
             if (result) {
                 console.log(result);
@@ -61,7 +61,7 @@
     <ul style="list-style: none;">
         <li><button onclick="updateUser()">Update User</button></li>
         <li><button onclick="addInteraction()">Add User Item Interaction</button></li>
-        <li><button onclick="getRecommendations()">Get Recommendations</button></li>
+        <li><button onclick="getPrediction()">Get Prediction</button></li>
     </ul>
 </body>
 
