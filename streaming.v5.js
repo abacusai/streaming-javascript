@@ -1,63 +1,55 @@
 (function() {
-    var METHOD_DATASET = {
-        addUserItemInteraction: 'interaction',
-        upsertItemAttributes: 'item',
-        upsertUserAttributes: 'user'
+
+    var WRITE_METHODS = {
+        upsert: 'upsertData',
+        user: 'upsertData',
+        record: 'appendData',
+        append: 'appendData',
+        upsertMultiple: 'upsertMultipleData',
+        appendMultiple: 'appendMultipleData'
     }
-    var PREDICTION_METHOD_DATASET = {
-        getRecommendations: 'recommendations',
-        getRelatedItems: 'related',
-        getRankedItems: 'ranked',
-        getPersonalizedRanking: 'personalized'
-    }
-    var METHOD_ATTRIBUTES = {
-        addUserItemInteraction: 'additionalAttributes',
-        upsertItemAttributes: 'itemAttributes',
-        upsertUserAttributes: 'userAttributes'
-    }
-    var USER_KEY = 'userId';
-    var ITEM_KEY = 'itemId';
-    var TIMESTAMP_KEY = 'timestamp';
-    var DATA_KEY = 'data';
+
+    var PREDICT_METHOD = 'predict';
+
     var ENDPOINT;
     var AUTH_PARAM;
-    var DATASETS;
     var userId;
     var DEPLOYMENT_ID;
-    var DEPLOYMENT_PARAM;
-    var PREDICTION_USER_KEY = 'userId';
+    var DEPLOYMENT_AUTH_PARAM;
+    var FEATURE_GROUPS;
 
     var timerReCall = null;
     var interactionBuffer = [];
     var currentTimestamp = -1;
 
-    function initREaiCookieUser(newUserAttributes) {
+    var PREDICTION_USER_KEY = 'userId';
+    var USER_KEY = 'userId';
+    var TIMESTAMP_KEY = 'timestamp';
+
+    function initAbacusaiCookieUser(newUserAttributes) {
         let userCookie = document.cookie.split(';').find(function(entry) {
             return entry.trim().startsWith('abacusAiUserId=');
         });
         if (userCookie) {
             userId = userCookie.split('=')[1].trim();
         } else {
-            userId = 're/' + ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            userId = 'abacusai/' + ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 let r = Math.random() * 16 | 0,
                     v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
             }))
             document.cookie = `abacusAiUserId=${userId}; path="/"; max-age=86400`
-            if ('user' in DATASETS && DATASETS['user']) {
+            if ('user' in FEATURE_GROUPS && FEATURE_GROUPS['user']) {
                 interactionBuffer.push({
-                    method: 'upsertUserAttributes',
-                    datasetId: DATASETS.user,
+                    method: 'user',
+                    featureGroupId: FEATURE_GROUPS.user,
                     data: {
                         [USER_KEY]: userId,
-                        'userAttributes': {
-                            '_timezone': (new Date()).getTimezoneOffset(),
-                            '_referrer': document.referrer,
-                            '_useragent': navigator.userAgent,
-                            '_screendim': window.screen.width + "x" + window.screen.height,
-                            ...newUserAttributes
-                        }
-
+                        '_timezone': (new Date()).getTimezoneOffset(),
+                        '_referrer': document.referrer,
+                        '_useragent': navigator.userAgent,
+                        '_screendim': window.screen.width + "x" + window.screen.height,
+                        ...newUserAttributes
                     }
                 });
 
@@ -69,12 +61,12 @@
         }
     }
 
-    function methodUrl(method, datasetId) {
-        return `${ENDPOINT}/${method}?${AUTH_PARAM}&datasetId=${datasetId}`;
+    function methodUrl(method, featureGroupId) {
+        return `${ENDPOINT}/${method}?${AUTH_PARAM}&featureGroupId=${featureGroupId}`;
     }
 
-    function predictionUrl(method) {
-        return `${ENDPOINT}/${method}?${DEPLOYMENT_PARAM}&deploymentId=${DEPLOYMENT_ID}`;
+    function predictionUrl() {
+        return `${ENDPOINT}/predict?${DEPLOYMENT_AUTH_PARAM}&deploymentId=${DEPLOYMENT_ID}`;
     }
 
     function reaitag(command, params, callback = () => {}) {
@@ -83,20 +75,21 @@
                 console.warn('Missing required init params.')
                 return
             }
-            let subdomain = (params.workspace || '').replace(/[^a-zA-Z0-9.]/g, '') || 'www';
+            let subdomain = (params.workspace || '').replace(/[^a-zA-Z0-9.]/g, '') || 'api';
             ENDPOINT = `https://${subdomain}.abacus.ai/api`
             AUTH_PARAM = 'streamingToken=' + params.streamingToken;
-            DATASETS = params.datasets || {}
+            FEATURE_GROUPS = params.featureGroups || {}
             DEPLOYMENT_ID = params.deploymentId || null;
-            DEPLOYMENT_PARAM = 'deploymentToken=' + params.deploymentToken;
+            DEPLOYMENT_AUTH_PARAM = 'deploymentToken=' + params.deploymentToken;
             PREDICTION_USER_KEY = params.userKey || PREDICTION_USER_KEY;
+            USER_KEY = params.userKey || USER_KEY;
             if (params.hasOwnProperty(USER_KEY) && params[USER_KEY]) {
                 userId = params[USER_KEY];
             } else {
                 if (params.hasOwnProperty(USER_KEY)) {
                     console.error('Invalid value for userId field, using cookie instead.')
                 }
-                initREaiCookieUser(params.newUserAttributes)
+                initAbacusaiCookieUser(params.newUserAttributes)
             }
             callback(userId);
             return userId;
@@ -104,7 +97,7 @@
 
         if (command === 'setUser') {
             if (params) {
-                userId = params
+                userId = params;
             }
             return;
         }
@@ -114,40 +107,30 @@
             return userId;
         }
 
-        if (command in METHOD_DATASET) {
+        if (command in WRITE_METHODS) {
             if (!params) {
-                console.log('Missing update data');
+                console.log('Missing streaming data');
                 return;
             }
-
-            let dataset_key = METHOD_DATASET[command];
-            if (!DATASETS || !DATASETS.hasOwnProperty(dataset_key)) {
-                console.warn('No dataset configured for ' + command);
+            if (!FEATURE_GROUPS || !FEATURE_GROUPS.hasOwnProperty(command)) {
+                console.warn('No feature group configured for method ' + command);
                 return;
             }
 
             let update = Object.assign({}, params);
-            let attributes_key = METHOD_ATTRIBUTES[command];
 
             if (!params.hasOwnProperty(TIMESTAMP_KEY)) {
                 currentTimestamp = Math.max(currentTimestamp + 1, Date.now())
                 update[TIMESTAMP_KEY] = currentTimestamp;
             }
 
-            if (['addUserItemInteraction', 'upsertUserAttributes'].indexOf(command) >= 0) {
-                if (!params.hasOwnProperty(USER_KEY)) {
-                    update[USER_KEY] = userId;
-                }
+            if (!params.hasOwnProperty(USER_KEY)) {
+                update[USER_KEY] = userId;
             }
-
-            if (!update.hasOwnProperty(attributes_key)) {
-                update[attributes_key] = {};
-            }
-            let attributes = update[attributes_key];
 
             interactionBuffer.push({
-                method: command,
-                datasetId: DATASETS[dataset_key],
+                method: WRITE_METHODS[command],
+                featureGroupId: FEATURE_GROUPS[command],
                 data: update
             });
 
@@ -157,7 +140,7 @@
 
             return;
         }
-        if (command in PREDICTION_METHOD_DATASET) {
+        if (command == PREDICT_METHOD) {
             if (!params) {
                 params = { data: {} };
             } else if (params.data == null) {
@@ -169,7 +152,7 @@
             flushInteractions();
             params.reaiRetryNum = 0;
 
-            postPrediction(command, params, callback);
+            postPrediction(params, callback);
             return;
         }
 
@@ -196,7 +179,7 @@
 
     function postInteractions(params) {
         var request = new XMLHttpRequest();
-        request.open('POST', methodUrl(params.event.method, params.event.datasetId), true);
+        request.open('POST', methodUrl(params.event.method, params.event.featureGroupId), true);
         request.onload = function() {
             if (request.status >= 500 && params.reaiRetryNum < 3) {
                 console.warn('Error recording interactions: ' + request.status);
@@ -206,12 +189,12 @@
         };
 
         request.setRequestHeader("Content-Type", "application/json");
-        request.send(JSON.stringify(params.event.data));
+        request.send(JSON.stringify({'data': params.event.data}));
     }
 
-    function postPrediction(method, params, callback) {
+    function postPrediction(params, callback) {
         var request = new XMLHttpRequest();
-        request.open('POST', predictionUrl(method), true);
+        request.open('POST', predictionUrl(), true);
         request.onload = function() {
             if (request.status == 200) {
                 callback(JSON.parse(request.response).result, null);
