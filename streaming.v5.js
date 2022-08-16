@@ -125,12 +125,13 @@
       if (!(USER_KEY in params)) {
         update[USER_KEY] = userId
       }
-
-      interactionBuffer.push({
-        method: WRITE_METHODS[command],
-        featureGroupId: FEATURE_GROUPS[command],
-        data: update
-      })
+      if (update) {
+        interactionBuffer.push({
+          method: WRITE_METHODS[command],
+          featureGroupId: FEATURE_GROUPS[command],
+          data: update
+        })
+      }
 
       if (timerReCall == null) {
         timerReCall = setTimeout(flushInteractions, 10)
