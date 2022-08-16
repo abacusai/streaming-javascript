@@ -40,7 +40,7 @@
       document.cookie = `abacusAiUserId=${userId}; path="/"; max-age=86400`
       if ('user' in FEATURE_GROUPS && FEATURE_GROUPS.user) {
         interactionBuffer.push({
-          method: 'user',
+          method: WRITE_METHODS.user,
           featureGroupId: FEATURE_GROUPS.user,
           data: {
             [USER_KEY]: userId,
