@@ -73,7 +73,8 @@
         console.warn('Missing required init params.')
         return
       }
-      const subdomain = (params.workspace || '').replace(/[^a-zA-Z0-9.]/g, '') || 'api'
+      let subdomain = (params.workspace || '').replace(/[^a-zA-Z0-9.]/g, '');
+      subdomain = subdomain ? subdomain + '.api' : 'api';
       ENDPOINT = `https://${subdomain}.abacus.ai/api`
       AUTH_PARAM = 'streamingToken=' + params.streamingToken
       FEATURE_GROUPS = params.featureGroups || {}
@@ -85,7 +86,7 @@
         userId = params[USER_KEY]
       } else {
         if (USER_KEY in params) {
-          console.error('Invalid value for userId field, using cookie instead.')
+          console.warn('Invalid value for userId field, using cookie instead.')
         }
         initAbacusaiCookieUser(params.newUserAttributes)
       }
