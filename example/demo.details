@@ -1,5 +1,5 @@
 ---
- name: Abacus.AI v6 Streaming Demo
+ name: Abacus.AI v8 Streaming Demo
  description: A simple page demoing Streaming and Predictions using Abacus.AI
  authors:
    - Abacus.AI
