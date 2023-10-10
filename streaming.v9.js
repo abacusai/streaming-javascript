@@ -220,14 +220,21 @@
     request.send(JSON.stringify({ queryData: params.data, ...params.options }))
   }
 
+  if (window.reaitag) {
+    return;
+  }
   window.reaitag = reaitag
 
-  if (window.reDataList) {
-    const list = window.reDataList.slice(0)
-    window.reDataList = []
+  const processReDataList = function() {
+    if (window.reDataList && window.reDataList.length) {
+      const list = window.reDataList.slice(0)
+      window.reDataList = []
 
-    list.forEach(function (item) {
-      reaitag.apply(this, item)
-    })
+      list.forEach(function (item) {
+        reaitag.apply(this, item)
+      })
+    }
+    setTimeout(processReDataList, 1000) // Poll every second for new data
   }
+  processReDataList()
 })()
